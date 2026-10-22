@@ -34,6 +34,15 @@ export function ModelPicker({
   // provably so to the type checker, and the trigger has to render something.
   const selected = GAME_MODELS.find((model) => model.id === modelId)
 
+  if (GAME_MODELS.length === 1) {
+    return (
+      <span className="inline-flex items-center gap-2 px-1.5 text-sm text-muted-foreground">
+        <GripIcon aria-hidden="true" className="size-4" />
+        {GAME_MODELS[0].name}
+      </span>
+    )
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger

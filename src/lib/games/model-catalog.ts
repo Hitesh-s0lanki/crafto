@@ -12,30 +12,42 @@
  */
 export const GAME_MODELS = [
   {
-    id: "claude-opus-5",
-    name: "Opus 5",
-    tagline: "The most capable builder — best for a game from scratch.",
+    id: "accounts/fireworks/models/glm-5p3-flash",
+    name: "GLM-5.3-Flash",
+    tagline: "Build and revise games with GLM on Fireworks.",
   },
-  {
-    id: "claude-sonnet-5",
-    name: "Sonnet 5",
-    tagline: "Most of the ability, a good deal faster. Good for iterating.",
-  },
-  {
-    id: "claude-haiku-4-5",
-    name: "Haiku 4.5",
-    tagline: "The quickest and cheapest — best for small, specific tweaks.",
-  },
-  {
-    id: "gpt-5.6-terra",
-    name: "GPT-5.6 Terra",
-    tagline: "Balances intelligence and cost for substantial builds.",
-  },
-  {
-    id: "gpt-5.6-luna",
-    name: "GPT-5.6 Luna",
-    tagline: "The lowest-cost option for focused changes and quick iterations.",
-  },
+  // Temporarily disabled: restore with the Modal provider in ./models.
+  // {
+  //   id: "zai-org/GLM-5.3-Flash",
+  //   name: "GLM-5.3-Flash",
+  //   tagline: "Build and revise games with GLM on Modal.",
+  // },
+  // Other models are temporarily inactive.
+  // {
+  //   id: "gpt-5.6-terra",
+  //   name: "GPT-5.6 Terra",
+  //   tagline: "Balances intelligence and cost for substantial builds.",
+  // },
+  // {
+  //   id: "gpt-5.6-luna",
+  //   name: "GPT-5.6 Luna",
+  //   tagline: "The lowest-cost option for focused changes and quick iterations.",
+  // },
+  // {
+  //   id: "laguna-s-2.1-free",
+  //   name: "Laguna S 2.1 (Free)",
+  //   tagline: "A coding specialist for implementing and debugging game systems.",
+  // },
+  // {
+  //   id: "nemotron-3-ultra-free",
+  //   name: "Nemotron 3 Ultra (Free)",
+  //   tagline: "Strong reasoning for complex game architecture and planning.",
+  // },
+  // {
+  //   id: "qwen3.8-27b-free",
+  //   name: "Qwen3.8 27B (Free)",
+  //   tagline: "A multimodal option for gameplay, UI, and visual iteration.",
+  // },
 ] as const
 
 /**
@@ -53,7 +65,8 @@ export type GameModelId = (typeof GAME_MODELS)[number]["id"]
  * Every turn today, since nothing sends a choice yet — so this is the model the
  * app actually uses, not a fallback that rarely fires.
  */
-export const DEFAULT_GAME_MODEL_ID: GameModelId = "claude-opus-5"
+export const DEFAULT_GAME_MODEL_ID: GameModelId =
+  "accounts/fireworks/models/glm-5p3-flash"
 
 /**
  * Whether a value names a model this app offers.

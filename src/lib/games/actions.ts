@@ -1,6 +1,5 @@
 "use server"
 
-import { anthropic } from "@ai-sdk/anthropic"
 import { auth } from "@clerk/nextjs/server"
 import * as Sentry from "@sentry/nextjs"
 import { generateText } from "ai"
@@ -18,16 +17,17 @@ import {
   type GameModelId,
   isGameModelId,
 } from "@/lib/games/model-catalog"
+import { gameModelSettings } from "@/lib/games/agent"
 import { truncateTitle } from "@/lib/games/title"
 import { describeError, elapsed } from "@/lib/observability"
 
-const TITLE_MODEL = "claude-haiku-4-5"
+const TITLE_MODEL = DEFAULT_GAME_MODEL_ID
 
 /**
  * Names a game after the prompt it was created from.
  *
- * This runs before the composer can navigate anywhere, so it uses the cheapest,
- * fastest model available and falls back to the raw prompt if the model is slow,
+ * This runs before the composer can navigate anywhere, so it requests a short
+ * title and falls back to the raw prompt if the model is slow,
  * unavailable, or returns nothing usable — a game with an awkward title beats a
  * create that fails.
  */
@@ -36,13 +36,14 @@ async function generateTitle(prompt: string) {
 
   try {
     const { text } = await generateText({
-      model: anthropic(TITLE_MODEL),
+      ...gameModelSettings(TITLE_MODEL),
       instructions:
         "You name games from the prompt that created them. Reply with a title " +
         "of at most four words in title case. No quotes, no punctuation at the " +
         "end, no explanation — the title only.",
       prompt,
-      maxOutputTokens: 32,
+      // GLM includes reasoning in the output budget, even for short titles.
+      maxOutputTokens: 2048,
     })
 
     // Models like to wrap a bare title in quotes even when told not to.

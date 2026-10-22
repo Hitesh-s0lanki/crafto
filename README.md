@@ -87,11 +87,8 @@ DAYTONA_API_KEY=
 # Runs the Trigger.dev chat session from Next.js server actions.
 TRIGGER_SECRET_KEY=
 
-# Used by the Trigger.dev agent for Claude model calls.
-ANTHROPIC_API_KEY=
-
-# Used by the Trigger.dev agent for GPT model calls.
-OPENAI_API_KEY=
+# Used for every game and title generation request.
+OPENROUTER_API_KEY=
 ```
 
 Get `TRIGGER_SECRET_KEY` from the Trigger.dev dashboard for the environment you
@@ -160,8 +157,7 @@ scoped to the active organization.
 | `CLERK_SECRET_KEY` | Yes | Clerk server-side authentication and billing data |
 | `DAYTONA_API_KEY` | Yes | Creating and managing game sandboxes |
 | `TRIGGER_SECRET_KEY` | Yes | Starting Trigger.dev chat sessions from Next.js |
-| `ANTHROPIC_API_KEY` | Yes | Claude model requests from the chat agent |
-| `OPENAI_API_KEY` | Yes | GPT model requests from the chat agent |
+| `OPENROUTER_API_KEY` | Yes | Game and title generation through OpenRouter |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Browser error reporting |
 | `SENTRY_DSN` | No | Server and Trigger.dev worker error reporting |
 | `SENTRY_AUTH_TOKEN` | No | Sentry source-map uploads |

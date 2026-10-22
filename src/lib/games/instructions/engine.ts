@@ -252,9 +252,42 @@ and createAmbience(engine, { follow }) for drifting dust or stars.
 
 ## state — the part that isn't 3D
 
-createStateMachine({ playing: { enter, update, exit }, over: {...} }, "playing",
-engine) — one named state instead of four booleans, three of which can be true
-at once. .go(name) is safe to call from an update.
+Use a state machine to make the required start screen a real boundary around
+gameplay, not a visual layer over a round that has already begun:
+
+  let startScreen
+  const state = createStateMachine({
+    ready: {
+      enter: () => {
+        startScreen = game.hud.overlay({
+          title: "GAME TITLE",
+          body: "Reach the beacon · WASD to move · Space to jump",
+          buttons: [{ label: "Start", onClick: () => state.go("playing") }],
+        })
+      },
+      update: () => {
+        if (game.input.pressed("fire") || game.input.pressed("jump")) {
+          startScreen?.close()
+          state.go("playing")
+        }
+      },
+    },
+    playing: { enter: () => game.hud.banner("GO"), update: (dt) => play(dt) },
+    over: { enter: () => showGameOver() },
+  }, "ready", game.engine)
+
+The title, copy and controls must match the game rather than this example.
+Create the world before the machine so the start screen has a composed scene
+behind it, but put simulation, spawning, countdowns and scoring in the playing
+state. The Start click/tap is also the browser gesture that unlocks Web Audio;
+the audio helper handles that gesture automatically, so start music and effects
+from the transition into playing rather than while the ready screen is open.
+Do not use engine.pause() for the initial screen: it also stops the state
+machine from seeing keyboard input. A ready state is the clean boundary.
+
+createStateMachine(states, initial, engine) gives one named state instead of
+four booleans, three of which can be true at once. .go(name) is safe to call
+from an update.
 
 createScore({ hud }) keeps a high score in localStorage — the whole reason to
 replay a small game, and the thing most often forgotten. createStorage(ns) never

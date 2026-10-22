@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Describe a game and watch it come to life with Crafto.",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#6857f5",
+    background_color: "#0d0c1a",
+    theme_color: "#6847f5",
     icons: [
       {
         src: "/icons/icon-192.png",

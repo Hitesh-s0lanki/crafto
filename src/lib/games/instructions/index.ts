@@ -8,8 +8,7 @@ import { workflow } from "./workflow"
  * The agent's system prompt, as one system message per subject.
  *
  * Kept as separate blocks rather than one string so each stays editable on its
- * own; the Anthropic provider concatenates them into the request's system
- * field, so the model reads them as one prompt in this order — what the job is,
+ * own; the provider sends them as one ordered system prompt — what the job is,
  * then where it is done, then what it is done with.
  *
  * `satisfies` rather than an annotation: `Instructions` also admits a bare

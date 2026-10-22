@@ -53,7 +53,7 @@ export function LandingComposer({ signedIn }: { signedIn: boolean }) {
           <div className="hidden items-center gap-2 text-sm text-white/55 sm:flex">
             <SparklesIcon
               aria-hidden="true"
-              className="size-4 text-orange-300"
+              className="size-4 text-brand-support"
             />
             Describe it. Crafto builds it.
           </div>
@@ -61,7 +61,7 @@ export function LandingComposer({ signedIn }: { signedIn: boolean }) {
             type="submit"
             size="lg"
             disabled={!trimmedPrompt}
-            className="w-full rounded-full bg-orange-500 px-5 text-white shadow-lg shadow-orange-950/30 hover:bg-orange-400 active:scale-96 sm:ms-auto sm:w-auto"
+            className="w-full rounded-full bg-primary px-5 text-primary-foreground shadow-lg shadow-violet-950/35 hover:bg-primary/90 active:scale-96 sm:ms-auto sm:w-auto"
           >
             {signedIn ? "Build this game" : "Start building"}
             <ArrowUpIcon aria-hidden="true" />

@@ -51,6 +51,7 @@ const MAX_STEPS = 48
  */
 export const gameChat = chat.agent({
   id: "game-chat",
+  uiMessageStreamOptions: { sendReasoning: true },
   clientDataSchema: gameClientDataSchema,
   hydrateMessages: async ({ chatId, trigger, incomingMessages }) => {
     const startedAt = performance.now()
@@ -255,6 +256,25 @@ export const gameChat = chat.agent({
       // Fires on stop and on cancel. Without it, Stop only updates the UI.
       abortSignal: signal,
       stopWhen: stepCountIs(MAX_STEPS),
+      // Timing only: prompts, tool arguments and generated code stay private.
+      onLanguageModelCallEnd: ({
+        callId,
+        performance,
+        usage,
+        finishReason,
+      }) => {
+        logger.info("Game model call completed", {
+          "game.id": chatId,
+          "gen_ai.request.model": modelId,
+          "gen_ai.call.id": callId,
+          "gen_ai.finish_reason": finishReason,
+          "gen_ai.usage.input_tokens": usage.inputTokens,
+          "gen_ai.usage.output_tokens": usage.outputTokens,
+          "model.time_to_first_output_ms": performance.timeToFirstOutputMs,
+          "model.output_tokens_per_second": performance.outputTokensPerSecond,
+          duration_ms: performance.responseTimeMs,
+        })
+      },
       // Per step rather than per turn, so a build that runs for minutes bills
       // as it goes: the sidebar drops while the game is still being written,
       // and a turn that crashes or is stopped halfway has still paid for the
@@ -276,16 +296,13 @@ export const gameChat = chat.agent({
           // better outcome than a build that dies halfway through writing a
           // game. The row is not recoverable afterwards, though, so an org
           // billed less than it used shows up here and nowhere else.
-          logger.error(
-            logger.fmt`Could not charge a step for game ${chatId}`,
-            {
-              "game.id": chatId,
-              "organization.id": orgId,
-              "gen_ai.request.model": modelId,
-              "gen_ai.response.id": response.id,
-              ...describeError(error),
-            }
-          )
+          logger.error(logger.fmt`Could not charge a step for game ${chatId}`, {
+            "game.id": chatId,
+            "organization.id": orgId,
+            "gen_ai.request.model": modelId,
+            "gen_ai.response.id": response.id,
+            ...describeError(error),
+          })
         }
       },
     })

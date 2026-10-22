@@ -25,6 +25,7 @@ import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { ChatComposer } from "@/components/chat-composer"
+import { ChatReasoning } from "@/components/chat-reasoning"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
 import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"
@@ -262,93 +263,167 @@ export function ChatThread({
     )
   )
 
+  const reasoningOnlyResponse =
+    status !== "submitted" &&
+    status !== "streaming" &&
+    lastMessage?.role === "assistant" &&
+    lastMessage.parts.some((part) => part.type === "reasoning") &&
+    !lastMessage.parts.some(
+      (part) =>
+        (part.type === "text" && part.text.trim().length > 0) ||
+        isToolUIPart(part)
+    )
+
+  const waitingForResponse =
+    (status === "submitted" || status === "streaming") &&
+    (lastMessage?.role !== "assistant" ||
+      !lastMessage.parts.some(
+        (part) =>
+          ((part.type === "text" || part.type === "reasoning") &&
+            part.text.trim().length > 0) ||
+          isToolUIPart(part)
+      ))
+
   return (
     <div className="flex h-full flex-col">
-      <MessageScrollerProvider>
+      <MessageScrollerProvider autoScroll defaultScrollPosition="end">
         <MessageScroller className="flex-1">
           <MessageScrollerViewport>
             <MessageScrollerContent className="mx-auto w-full max-w-3xl px-4 py-8">
-              {messages.map((message) => (
-                <MessageScrollerItem key={message.id} messageId={message.id}>
-                  <Message align={message.role === "user" ? "end" : "start"}>
-                    {message.role === "assistant" && (
-                      <MessageAvatar className="size-8 self-start rounded-lg bg-transparent">
-                        <Image
-                          src="/brand/crafto-icon-clean.png"
-                          alt="Crafto"
-                          width={32}
-                          height={32}
-                          className="size-8 object-contain"
-                        />
-                      </MessageAvatar>
-                    )}
-                    <MessageContent>
-                      <Bubble
-                        variant={
-                          message.role === "user" ? "secondary" : "ghost"
-                        }
-                        align={message.role === "user" ? "end" : "start"}
-                      >
-                        {/* A turn arrives as alternating text and tool parts,
+              {messages
+                .filter(
+                  (message) =>
+                    !(
+                      waitingForResponse &&
+                      message === lastMessage &&
+                      message.role === "assistant"
+                    )
+                )
+                .map((message) => (
+                  <MessageScrollerItem key={message.id} messageId={message.id}>
+                    <Message align={message.role === "user" ? "end" : "start"}>
+                      {message.role === "assistant" && (
+                        <MessageAvatar className="size-8 self-start rounded-lg bg-transparent">
+                          <Image
+                            src="/brand/crafto-icon-clean.png"
+                            alt="Crafto"
+                            width={32}
+                            height={32}
+                            className="size-8 object-contain"
+                          />
+                        </MessageAvatar>
+                      )}
+                      <MessageContent>
+                        <Bubble
+                          variant={
+                            message.role === "user" ? "secondary" : "ghost"
+                          }
+                          align={message.role === "user" ? "end" : "start"}
+                        >
+                          {/* A turn arrives as alternating text and tool parts,
                             one per step, so they stack rather than run together
                             on one line. */}
-                        <BubbleContent className="flex flex-col items-start gap-2">
-                          {message.parts.map((part, index) => {
-                            if (part.type === "text") {
-                              return <span key={index}>{part.text}</span>
-                            }
+                          <BubbleContent className="flex flex-col items-start gap-2">
+                            {message.parts.map((part, index) => {
+                              if (part.type === "reasoning") {
+                                return (
+                                  <ChatReasoning
+                                    key={index}
+                                    text={part.text}
+                                    streaming={
+                                      status === "streaming" &&
+                                      message.id === lastMessage?.id &&
+                                      part.state === "streaming"
+                                    }
+                                  />
+                                )
+                              }
 
-                            // The one tool the player answers rather than
-                            // the sandbox: it gets a question card, not a
-                            // line in the log.
-                            if (
-                              isToolUIPart(part) &&
-                              getToolName(part) === ASK_PLAYER
-                            ) {
-                              return (
-                                <AskPlayerCard
-                                  key={part.toolCallId}
-                                  part={part}
-                                  // Answerable only on the last message, the
-                                  // only one `addToolOutput` writes to. An
-                                  // older card is history and renders as such.
-                                  onAnswer={
-                                    message.id === lastMessage?.id
-                                      ? (option) =>
-                                          void addToolOutput({
-                                            tool: ASK_PLAYER,
-                                            toolCallId: part.toolCallId,
-                                            output: {
-                                              optionId: option.id,
-                                              label: option.label,
-                                            },
-                                          })
-                                      : undefined
-                                  }
-                                />
-                              )
-                            }
+                              if (part.type === "text") {
+                                return <span key={index}>{part.text}</span>
+                              }
 
-                            // Covers both halves of a call: the part starts as
-                            // the tool call and becomes the result in place, so
-                            // one marker tracks it from start to finish.
-                            if (isToolUIPart(part)) {
-                              return (
-                                <ToolCallMarker
-                                  key={part.toolCallId}
-                                  part={part}
-                                />
-                              )
-                            }
+                              // The one tool the player answers rather than
+                              // the sandbox: it gets a question card, not a
+                              // line in the log.
+                              if (
+                                isToolUIPart(part) &&
+                                getToolName(part) === ASK_PLAYER
+                              ) {
+                                return (
+                                  <AskPlayerCard
+                                    key={part.toolCallId}
+                                    part={part}
+                                    // Answerable only on the last message, the
+                                    // only one `addToolOutput` writes to. An
+                                    // older card is history and renders as such.
+                                    onAnswer={
+                                      message.id === lastMessage?.id
+                                        ? (option) =>
+                                            void addToolOutput({
+                                              tool: ASK_PLAYER,
+                                              toolCallId: part.toolCallId,
+                                              output: {
+                                                optionId: option.id,
+                                                label: option.label,
+                                              },
+                                            })
+                                        : undefined
+                                    }
+                                  />
+                                )
+                              }
 
-                            return null
-                          })}
-                        </BubbleContent>
-                      </Bubble>
+                              // Covers both halves of a call: the part starts as
+                              // the tool call and becomes the result in place, so
+                              // one marker tracks it from start to finish.
+                              if (isToolUIPart(part)) {
+                                return (
+                                  <ToolCallMarker
+                                    key={part.toolCallId}
+                                    part={part}
+                                  />
+                                )
+                              }
+
+                              return null
+                            })}
+                          </BubbleContent>
+                        </Bubble>
+                      </MessageContent>
+                    </Message>
+                  </MessageScrollerItem>
+                ))}
+              {waitingForResponse && (
+                <MessageScrollerItem messageId="assistant-loading">
+                  <Message align="start">
+                    <MessageAvatar className="size-8 self-start rounded-lg bg-transparent">
+                      <Image
+                        src="/brand/crafto-icon-clean.png"
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="size-8 object-contain"
+                      />
+                    </MessageAvatar>
+                    <MessageContent>
+                      <div role="status" className="w-full max-w-sm py-2">
+                        <span className="sr-only">
+                          Crafto is preparing a response
+                        </span>
+                        <div
+                          aria-hidden="true"
+                          className="flex w-64 max-w-full flex-col gap-2.5 sm:w-80"
+                        >
+                          <div className="chat-response-shimmer h-3 w-full rounded-full" />
+                          <div className="chat-response-shimmer h-3 w-5/6 rounded-full" />
+                          <div className="chat-response-shimmer h-3 w-3/5 rounded-full" />
+                        </div>
+                      </div>
                     </MessageContent>
                   </Message>
                 </MessageScrollerItem>
-              ))}
+              )}
             </MessageScrollerContent>
           </MessageScrollerViewport>
           <MessageScrollerButton />
@@ -380,6 +455,15 @@ export function ChatThread({
             <CircleAlertIcon />
             <AlertTitle>That turn didn&apos;t finish</AlertTitle>
             <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        ) : reasoningOnlyResponse ? (
+          <Alert>
+            <CircleAlertIcon />
+            <AlertTitle>The model stopped before taking action</AlertTitle>
+            <AlertDescription>
+              Only thinking was returned. No game changes were made in this
+              turn. Send another message to continue.
+            </AlertDescription>
           </Alert>
         ) : null}
         <ChatComposer

@@ -30,46 +30,63 @@ type ModelRates = {
 /**
  * What each model in the catalog costs, per million tokens.
  *
- * Sources: Anthropic and OpenAI published pricing, checked 2026-09-22. Cache
- * reads are currently 0.1x the base input rate and cache writes 1.25x, but the
- * rates are written out rather than derived — a multiplier that changes for
- * one model would otherwise silently misprice every row.
+ * Sources: OpenAI published pricing and OpenRouter's model catalog, checked
+ * 2026-09-26. Cache reads are currently 0.1x the base input rate and cache
+ * writes 1.25x for the paid OpenAI models. OpenRouter's free variants have no
+ * token charge, so every rate for those models is zero.
  *
  * `satisfies` rather than an annotation, so a model added to the catalog and
  * forgotten here is a type error rather than an undefined rate that prices a
  * turn at zero.
  */
 export const MODEL_RATES = {
-  "claude-opus-5": {
-    input: perMillionTokens(5),
-    cacheRead: perMillionTokens(0.5),
-    cacheWrite: perMillionTokens(6.25),
-    output: perMillionTokens(25),
+  // https://fireworks.ai/models/fireworks/glm-5p3-flash (2026-10-21)
+  "accounts/fireworks/models/glm-5p3-flash": {
+    input: perMillionTokens(0.15),
+    cacheRead: perMillionTokens(0.03),
+    cacheWrite: 0n,
+    output: perMillionTokens(0.5),
   },
-  "claude-sonnet-5": {
-    input: perMillionTokens(2),
-    cacheRead: perMillionTokens(0.2),
-    cacheWrite: perMillionTokens(2.5),
-    output: perMillionTokens(10),
-  },
-  "claude-haiku-4-5": {
-    input: perMillionTokens(1),
-    cacheRead: perMillionTokens(0.1),
-    cacheWrite: perMillionTokens(1.25),
-    output: perMillionTokens(5),
-  },
-  "gpt-5.6-terra": {
-    input: perMillionTokens(2),
-    cacheRead: perMillionTokens(0.2),
-    cacheWrite: perMillionTokens(2.5),
-    output: perMillionTokens(12),
-  },
-  "gpt-5.6-luna": {
-    input: perMillionTokens(0.2),
-    cacheRead: perMillionTokens(0.02),
-    cacheWrite: perMillionTokens(0.25),
-    output: perMillionTokens(1.2),
-  },
+  // Modal rates are disabled alongside its catalog entry.
+  // Self-hosted Modal compute has no supplied per-token price. Do not charge
+  // invented token rates; configure these when a billing rate is established.
+  // "zai-org/GLM-5.3-Flash": {
+  //   input: 0n,
+  //   cacheRead: 0n,
+  //   cacheWrite: 0n,
+  //   output: 0n,
+  // },
+  // Other model rates are temporarily inactive.
+  // "gpt-5.6-terra": {
+  //   input: perMillionTokens(2),
+  //   cacheRead: perMillionTokens(0.2),
+  //   cacheWrite: perMillionTokens(2.5),
+  //   output: perMillionTokens(12),
+  // },
+  // "gpt-5.6-luna": {
+  //   input: perMillionTokens(0.2),
+  //   cacheRead: perMillionTokens(0.02),
+  //   cacheWrite: perMillionTokens(0.25),
+  //   output: perMillionTokens(1.2),
+  // },
+  // "laguna-s-2.1-free": {
+  //   input: 0n,
+  //   cacheRead: 0n,
+  //   cacheWrite: 0n,
+  //   output: 0n,
+  // },
+  // "nemotron-3-ultra-free": {
+  //   input: 0n,
+  //   cacheRead: 0n,
+  //   cacheWrite: 0n,
+  //   output: 0n,
+  // },
+  // "qwen3.8-27b-free": {
+  //   input: 0n,
+  //   cacheRead: 0n,
+  //   cacheWrite: 0n,
+  //   output: 0n,
+  // },
 } satisfies Record<GameModelId, ModelRates>
 
 function costOf(tokens: number | undefined, rate: bigint): bigint {
@@ -86,7 +103,7 @@ function costOf(tokens: number | undefined, rate: bigint): bigint {
  * What one step of a turn cost, in billionths of a dollar.
  *
  * The four token classes are priced separately because they differ by more
- * than an order of magnitude: on Opus a cached input token costs a tenth of a
+ * than an order of magnitude: a cached input token costs a tenth of a
  * fresh one and a cache write costs a quarter more, so a long build — which is
  * mostly the same context read back over and over — is billed nothing like its
  * raw token count suggests.

@@ -17,28 +17,33 @@ import {
  * of every game built on top of it.
  */
 
-const EMBER = "#ea580c"
-const AMBER = "#fb923c"
+// Matches the app's violet accent, mint support color, and theme surfaces.
+const VIOLET = "#7c3bec"
+const MINT = "#4cd39f"
+const PREVIEW_THEME = {
+  background: "#0c0d1a",
+  foreground: "#efeff6",
+  muted: "#a8a9be",
+}
 
 const engine = createEngine({
-  background: "#0a0a0a",
+  background: PREVIEW_THEME.background,
   fov: 40,
   cameraPosition: [0, 2.1, 9],
   lookAt: [0, 1.15, 0],
   // A gentle depth haze, so the floor fades out rather than ending at an edge.
-  fog: { color: "#0a0a0a", near: 9, far: 24 },
+  fog: { color: PREVIEW_THEME.background, near: 9, far: 24 },
   // Slightly under 1: ACES tone mapping rolls highlights off gracefully, but a
-  // saturated orange still clips to white if it is pushed all the way up, and
-  // clipped orange is just white.
+  // saturated violet still clips to white if it is pushed all the way up.
   exposure: 0.92,
 })
 
 // --- The mark ---------------------------------------------------------------
 
-// The logo reads as a cube because its faces are one orange at different
+// The logo reads as a cube because its faces are one violet at different
 // brightnesses. Six materials in BoxGeometry's own face order — +X, -X, +Y, -Y,
 // +Z, -Z — reproduce that from every angle rather than from one.
-const FACES = ["#ea580c", "#c2410c", "#fb923c", "#7c2d12", "#f97316", "#9a3412"]
+const FACES = [VIOLET, "#6d28d9", "#a78bfa", "#4c1d95", "#8b5cf6", "#5b21b6"]
 
 const faces = FACES.map((color) =>
   materials.standard({
@@ -50,7 +55,7 @@ const faces = FACES.map((color) =>
     metalness: 0,
     // Emissive in the face's own colour, not white: enough to keep the dark
     // faces off black and to give bloom something on the light ones, without
-    // desaturating the orange that is the whole point of the mark.
+    // washing out the violet accent.
     emissive: new THREE.Color(color),
     emissiveIntensity: 0.12,
   })
@@ -63,7 +68,7 @@ cube.castShadow = true
 // a visible seam, and this is that seam for one draw call.
 const edges = new THREE.LineSegments(
   new THREE.EdgesGeometry(cube.geometry),
-  new THREE.LineBasicMaterial({ color: new THREE.Color(EMBER) })
+  new THREE.LineBasicMaterial({ color: new THREE.Color(VIOLET) })
 )
 cube.add(edges)
 
@@ -77,7 +82,10 @@ engine.add(mark)
 
 // --- The room ---------------------------------------------------------------
 
-const floor = models.ground(60, { color: "#1a1a1a", accent: "#141414" })
+const floor = models.ground(60, {
+  color: PREVIEW_THEME.background,
+  texture: null,
+})
 engine.add(floor)
 
 const shadow = lights.blobShadow(engine.scene, mark, {
@@ -86,17 +94,17 @@ const shadow = lights.blobShadow(engine.scene, mark, {
 })
 
 // Dim, so the mark's own colour survives. A bright white key would bleach the
-// orange to pink, which is the failure this whole scene is tuned against.
+// violet highlights, which is the failure this whole scene is tuned against.
 lights.studio(engine.scene, { intensity: 0.42 })
 
 // A backlight, not a fill. Set well back rather than just behind: close in, its
 // falloff puts a blown-out hotspot on whichever edge is nearest, and the bloom
 // pass turns that into a flare over the silhouette.
-const glow = new THREE.PointLight(new THREE.Color(EMBER), 34, 14, 2)
+const glow = new THREE.PointLight(new THREE.Color(VIOLET), 34, 14, 2)
 glow.position.set(0, 0.9, -4.5)
 engine.add(glow)
 
-// Embers drifting past. Sparse and slow — atmosphere, not weather.
+// Mint particles drifting past, echoing the app’s supporting accent.
 const dust = new THREE.Points(
   (() => {
     const count = 120
@@ -111,7 +119,7 @@ const dust = new THREE.Points(
     return geometry
   })(),
   new THREE.PointsMaterial({
-    color: new THREE.Color(AMBER),
+    color: new THREE.Color(MINT),
     size: 0.05,
     map: materials.sparkTexture({ color: "#ffffff" }),
     transparent: true,
@@ -151,6 +159,11 @@ engine.onUpdate((dt, elapsed) => {
   dust.geometry.attributes.position.needsUpdate = true
 })
 
+// The starter preview stays dark even when the surrounding app is light.
+document.documentElement.style.colorScheme = "dark"
+document.documentElement.style.setProperty("--ink", PREVIEW_THEME.background)
+document.documentElement.style.setProperty("--snow", PREVIEW_THEME.foreground)
+document.documentElement.style.setProperty("--mist", PREVIEW_THEME.muted)
 engine.start()
 
 // --- Words ------------------------------------------------------------------

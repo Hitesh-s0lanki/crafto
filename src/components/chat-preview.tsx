@@ -165,7 +165,10 @@ export function ChatPreview({
     let reported = false
 
     const ping = () => {
-      frame.contentWindow?.postMessage({ type: "game-ping" }, "*")
+      frame.contentWindow?.postMessage(
+        { type: "game-ping" },
+        new URL(ready.url).origin
+      )
     }
 
     const onMessage = (event: MessageEvent) => {
@@ -243,7 +246,7 @@ export function ChatPreview({
       key={preview.revision}
       src={preview.url}
       title="Game preview"
-      className="h-full w-full border-0 bg-white"
+      className="h-full w-full border-0 bg-brand-canvas"
     />
   )
 }
